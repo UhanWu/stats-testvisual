@@ -9,6 +9,7 @@ library(knitr)          # For creating beautiful tables
 library(kableExtra)     # For styling the kable tables
 library(lubridate)      # For easier date handling
 library(sparkline)      # For inline plots
+library(DT)
 
 library(htmltools)
 

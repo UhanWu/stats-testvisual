@@ -1,0 +1,13 @@
+name: bros-statsanalyzer
+title: bros-statsanalyzer
+username: wdwsw4-yuhan-wu
+account: wdwsw4-yuhan-wu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15036006
+bundleId: 10569662
+url: https://wdwsw4-yuhan-wu.shinyapps.io/bros-statsanalyzer/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: apptest.R|README.md
