@@ -30,12 +30,12 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                 # Add sparkline JS dependency
                 sparkline::sparklineOutput("dummy_sparkline_output", height = "0px"),
                 navbarPage(
-                  "Interactive Statistical Analyzer",
+                  "Bro's Statistical Analyzer",
                   # Tab 0: About Page
                   tabPanel("About", icon = icon("info-circle"),
                            fluidRow(
                              column(12, style = "padding: 20px;",
-                                    h2("Welcome to the Interactive Statistical Analyzer"),
+                                    h2("Welcome to the Bro's Statistical Analyzer"),
                                     p("This application provides a comprehensive interface for exploratory data analysis (EDA), statistical testing, and data visualization."),
                                     hr(),
                                     h3("A Brief on Hypothesis Testing"),
@@ -71,7 +71,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                       )
                                     ),
                                     hr(),
-                                    h3("About Me"),
+                                    h3("About Bro"),
                                     p(tags$strong("Yuhan Wu")),
                                     p("Sophomore at Emory University, double majoring in Applied Mathematics & Statistics and Economics."),
                                     p("Passionate about research, statistics, and risk analysis."),
