@@ -10,6 +10,21 @@ library(kableExtra)     # For styling the kable tables
 library(lubridate)      # For easier date handling
 library(sparkline)      # For inline plots
 
+library(htmltools)
+
+# Create the LinkedIn hyperlink
+linkedin_link <- a(
+  href = "https://www.linkedin.com/in/wuyuhanm/",
+  target = "_blank", # Opens in a new tab
+  "Linkedin"
+)
+
+# Create the email link
+email_link <- a(
+  href = "mailto:yuhan.wu@emory.edu",
+  "yuhan.wu@emory.edu"
+)
+
 # Define the user interface (UI)
 ui <- fluidPage(theme = shinytheme("flatly"),
                 # Add sparkline JS dependency
@@ -59,7 +74,16 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                     h3("About Me"),
                                     p(tags$strong("Yuhan Wu")),
                                     p("Sophomore at Emory University, double majoring in Applied Mathematics & Statistics and Economics."),
-                                    p("Passionate about research, statistics, and risk analysis.")
+                                    p("Passionate about research, statistics, and risk analysis."),
+                                    p(
+                                      "Feel free to connect and chat with me at ",
+                                      linkedin_link,
+                                      " and ",
+                                      email_link,
+                                      "."
+                                    ),
+                                    p("Thank you so much for using my Shiny app and I hope you have a good time! 😊")
+                                    
                              )
                            )
                   ),
