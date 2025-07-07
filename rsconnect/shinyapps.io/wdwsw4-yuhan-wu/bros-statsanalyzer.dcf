@@ -5,7 +5,7 @@ account: wdwsw4-yuhan-wu
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15036040
-bundleId: 10570422
+bundleId: 10577513
 url: https://yuhanwuw.shinyapps.io/bros-statsanalyzer/
 version: 1
 asMultiple: FALSE
