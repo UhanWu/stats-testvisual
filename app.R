@@ -1,15 +1,15 @@
 # Load necessary libraries
 library(shiny)
-library(shinythemes)    # For themes
-library(shinycssloaders)# For loading spinners
+library(shinythemes)     # For themes
+library(shinycssloaders) # For loading spinners
 library(ggplot2)
 library(dplyr)
-library(tidyr)          # For pivoting
-library(nortest)        # For Anderson-Darling test
-library(knitr)          # For creating beautiful tables
-library(kableExtra)     # For styling the kable tables
-library(lubridate)      # For easier date handling
-library(sparkline)      # For inline plots
+library(tidyr)           # For pivoting
+library(nortest)         # For Anderson-Darling test
+library(knitr)           # For creating beautiful tables
+library(kableExtra)      # For styling the kable tables
+library(lubridate)       # For easier date handling
+library(sparkline)       # For inline plots
 library(htmltools)
 library(DT)
 
@@ -199,6 +199,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                uiOutput("check_data_viz"),
                                actionButton("view_data_viz", "View Current Data", icon = icon("search")),
                                tags$hr(),
+                               h4("Plot Setup"),
                                uiOutput("select_var_viz"),
                                conditionalPanel(
                                  condition = "input.plot_type == 'scatter' || input.plot_type == 'box_grouped' || input.plot_type == 'line'",
@@ -212,6 +213,12 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                        "Bar Plot" = "bar",
                                                        "Line Plot" = "line")),
                                checkboxInput("normalize_y", "Show as Probability/Density", value = FALSE),
+                               tags$hr(),
+                               h4("Customize Labels & Title"),
+                               textInput("plot_title", "Title", placeholder = "Auto-generated from variables"),
+                               textInput("plot_subtitle", "Subtitle", placeholder = "Optional subtitle"),
+                               textInput("plot_xlab", "X-axis Label", placeholder = "Auto-generated from variable"),
+                               textInput("plot_ylab", "Y-axis Label", placeholder = "Auto-generated from variable"),
                                tags$hr(),
                                h5("Recommendations"),
                                uiOutput("viz_recommendations")
@@ -633,7 +640,7 @@ server <- function(input, output, session) {
                 "hist" = {
                   validate(need(is.numeric(data[[input$var_viz]]), "Histogram requires a numeric variable."))
                   y_aes <- if(input$normalize_y) aes(y = ..density..) else aes(y = ..count..); y_lab <- if(input$normalize_y) "Density" else "Count"
-                  ggplot(data, aes_string(x = input$var_viz)) + geom_histogram(y_aes, alpha=0.7, fill="#3498db", color="white") + labs(y = y_lab)
+                  ggplot(data, aes_string(x = input$var_viz)) + geom_histogram(y_aes, alpha=0.7, fill="#3498db", color="white")
                 },
                 "box" = {
                   validate(need(is.numeric(data[[input$var_viz]]), "Box Plot requires a numeric variable."))
@@ -646,7 +653,7 @@ server <- function(input, output, session) {
                 "bar" = {
                   validate(need(!is.numeric(data[[input$var_viz]]), "Bar Plot is best for categorical variables."))
                   y_aes <- if(input$normalize_y) aes(y = ..prop.., group = 1) else aes(y = ..count..); y_lab <- if(input$normalize_y) "Probability" else "Count"
-                  ggplot(data, aes_string(x = input$var_viz)) + geom_bar(y_aes, fill="#3498db", alpha=0.7) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(y = y_lab)
+                  ggplot(data, aes_string(x = input$var_viz)) + geom_bar(y_aes, fill="#3498db", alpha=0.7) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
                 },
                 "box_grouped" = {
                   req(input$var_viz2); validate(need(is.numeric(data[[input$var_viz]]) && !is.numeric(data[[input$var_viz2]]), "Grouped Box Plot requires one numeric (Y-axis) and one categorical (X-axis) variable."))
@@ -657,9 +664,44 @@ server <- function(input, output, session) {
                   ggplot(data, aes_string(x = input$var_viz2, y = input$var_viz)) + geom_line(color="#3498db", size=1)
                 }
     )
-    y_title <- input$var_viz; x_title <- switch(input$plot_type, "hist" = input$var_viz, "box" = "", "scatter" = input$var_viz2, "bar" = input$var_viz, "box_grouped" = input$var_viz2, "line" = input$var_viz2, "")
-    plot_title <- paste(tools::toTitleCase(input$plot_type), "of", y_title, if(!is.null(x_title) && nchar(x_title) > 0) paste("by", x_title) else "")
-    print(p + labs(title = plot_title, x = x_title, y = y_title) + theme_minimal(base_size = 14) + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)))
+    
+    # Auto-generate default labels
+    default_y_title <- if(input$normalize_y) {
+      switch(input$plot_type, "hist" = "Density", "bar" = "Probability", input$var_viz)
+    } else {
+      switch(input$plot_type, "hist" = "Count", "bar" = "Count", input$var_viz)
+    }
+    
+    default_x_title <- switch(input$plot_type,
+                              "hist" = input$var_viz,
+                              "box" = "",
+                              "scatter" = input$var_viz2,
+                              "bar" = input$var_viz,
+                              "box_grouped" = input$var_viz2,
+                              "line" = input$var_viz2,
+                              "")
+    
+    default_plot_title <- paste(
+      tools::toTitleCase(gsub("_", " ", input$plot_type)),
+      "of", input$var_viz,
+      if(!is.null(default_x_title) && nzchar(default_x_title)) paste("by", default_x_title) else ""
+    )
+    
+    # Use user input if provided, otherwise use defaults
+    final_y_title <- if (nzchar(input$plot_ylab)) input$plot_ylab else default_y_title
+    final_x_title <- if (nzchar(input$plot_xlab)) input$plot_xlab else default_x_title
+    final_title <- if (nzchar(input$plot_title)) input$plot_title else default_plot_title
+    final_subtitle <- input$plot_subtitle # Will be empty string "" if not provided
+    
+    # Apply to the plot
+    print(p +
+            labs(title = final_title, subtitle = final_subtitle, x = final_x_title, y = final_y_title) +
+            theme_minimal(base_size = 14) +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              plot.subtitle = element_text(size = 16, hjust = 0.5) # Style for subtitle
+            )
+    )
   })
   
   output$plot_code <- renderText({
@@ -668,20 +710,27 @@ server <- function(input, output, session) {
     # 1. Start with the data and filtering code
     filter_code <- "my_filtered_data <- your_original_data %>%\n"
     filter_conditions <- c()
-    for (col_name in names(rv$data)) {
-      filter_input_id <- paste0("filter_", col_name)
-      if (!is.null(input[[filter_input_id]])) {
-        if (is.numeric(rv$data[[col_name]])) {
-          if(!identical(input[[filter_input_id]], c(min(rv$data[[col_name]], na.rm=T), max(rv$data[[col_name]], na.rm=T)))) {
-            filter_conditions <- c(filter_conditions, sprintf("  filter(`%s` >= %s & `%s` <= %s)", col_name, input[[filter_input_id]][1], col_name, input[[filter_input_id]][2]))
-          }
-        } else if (is.factor(rv$data[[col_name]])) {
-          if (length(input[[filter_input_id]]) < nlevels(rv$data[[col_name]])) {
-            filter_conditions <- c(filter_conditions, sprintf("  filter(`%s` %%in%% c('%s'))", col_name, paste(input[[filter_input_id]], collapse="', '")))
+    # Use rv$original_data for comparison to see if a filter is active
+    odata <- rv$original_data
+    if(!is.null(odata)) {
+      for (col_name in names(odata)) {
+        filter_input_id <- paste0("filter_", col_name)
+        if (!is.null(input[[filter_input_id]])) {
+          if (is.numeric(odata[[col_name]])) {
+            # Check if the slider is different from the max range
+            if(!isTRUE(all.equal(input[[filter_input_id]], c(min(odata[[col_name]], na.rm=T), max(odata[[col_name]], na.rm=T))))) {
+              filter_conditions <- c(filter_conditions, sprintf("  filter(`%s` >= %s & `%s` <= %s)", col_name, input[[filter_input_id]][1], col_name, input[[filter_input_id]][2]))
+            }
+          } else if (is.factor(odata[[col_name]])) {
+            # Check if a selection was made (not all levels are selected)
+            if (length(input[[filter_input_id]]) > 0 && length(input[[filter_input_id]]) < nlevels(odata[[col_name]])) {
+              filter_conditions <- c(filter_conditions, sprintf("  filter(`%s` %%in%% c('%s'))", col_name, paste(input[[filter_input_id]], collapse="', '")))
+            }
           }
         }
       }
     }
+    
     if(length(filter_conditions) > 0) {
       filter_code <- paste0(filter_code, paste(filter_conditions, collapse = " %>%\n"))
     } else {
@@ -708,8 +757,30 @@ server <- function(input, output, session) {
                         "line" = "geom_line()"
     )
     
-    # 3. Combine and return
-    paste0("# Load libraries\nlibrary(dplyr)\nlibrary(ggplot2)\n\n# Filter your data (if any filters were applied)\n", filter_code, "\n\n# Create the plot\n", plot_code, " +\n  ", geom_code)
+    # 3. Generate the labels code
+    default_y_title <- if(input$normalize_y) {
+      switch(input$plot_type, "hist" = "Density", "bar" = "Probability", input$var_viz)
+    } else {
+      switch(input$plot_type, "hist" = "Count", "bar" = "Count", input$var_viz)
+    }
+    default_x_title <- switch(input$plot_type, "hist" = input$var_viz, "box" = "", "scatter" = input$var_viz2, "bar" = input$var_viz, "box_grouped" = input$var_viz2, "line" = input$var_viz2, "")
+    default_plot_title <- paste(tools::toTitleCase(gsub("_", " ", input$plot_type)), "of", input$var_viz, if(!is.null(default_x_title) && nzchar(default_x_title)) paste("by", default_x_title) else "")
+    
+    final_y_title <- if (nzchar(input$plot_ylab)) input$plot_ylab else default_y_title
+    final_x_title <- if (nzchar(input$plot_xlab)) input$plot_xlab else default_x_title
+    final_title <- if (nzchar(input$plot_title)) input$plot_title else default_plot_title
+    final_subtitle <- input$plot_subtitle
+    
+    labs_args <- c(
+      sprintf('title = "%s"', final_title),
+      if (nzchar(final_subtitle)) sprintf('subtitle = "%s"', final_subtitle) else NULL,
+      if (nzchar(final_x_title)) sprintf('x = "%s"', final_x_title) else NULL,
+      sprintf('y = "%s"', final_y_title)
+    )
+    labs_code <- sprintf(" +\n  labs(%s)", paste(labs_args, collapse = ", "))
+    
+    # 4. Combine and return
+    paste0("# Load libraries\nlibrary(dplyr)\nlibrary(ggplot2)\n\n# NOTE: Replace 'your_original_data' with your data frame's name.\n", filter_code, "\n\n# Create the plot\n", plot_code, " +\n  ", geom_code, labs_code, " +\n  theme_minimal()")
   })
   
 }
