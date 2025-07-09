@@ -13,6 +13,8 @@ library(sparkline)       # For inline plots
 library(htmltools)
 library(DT)
 
+
+
 # Create the LinkedIn hyperlink
 linkedin_link <- a(
   href = "https://www.linkedin.com/in/wuyuhanm/",
