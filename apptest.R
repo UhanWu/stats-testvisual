@@ -15,8 +15,6 @@ library(DT)
 library(tidyverse)
 
 
-
-
 # Create the LinkedIn hyperlink
 linkedin_link <- a(
   href = "https://www.linkedin.com/in/wuyuhanm/",
