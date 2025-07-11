@@ -12,6 +12,8 @@ library(lubridate)       # For easier date handling
 library(sparkline)       # For inline plots
 library(htmltools)
 library(DT)
+library(tidyverse)
+
 
 
 
